@@ -8,9 +8,14 @@ import Control.Exception
 import Data.Int
 import Foreign.C.String
 import Foreign.C.Types
+import Foreign.Marshal.Alloc ( alloca )
 import Foreign.Ptr ( Ptr )
+import Foreign.Storable
 import System.Posix.Types
+import System.IO.Streams ( makeInputStream )
+import qualified System.IO.Streams.List as S
 
+import Codec.Archive.Error
 import Codec.Archive.Types
 
 
@@ -22,36 +27,6 @@ foreign import ccall "archive_entry.h archive_entry_free"
 
 withEntry :: (Ptr Entry -> IO a) -> IO a
 withEntry = bracket archive_entry_new archive_entry_free
-
-
-foreign import ccall "archive_entry.h archive_entry_acl_clear"
-  archive_entry_acl_clear :: Ptr Entry -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_acl_add_entry"
-  archive_entry_acl_add_entry :: Ptr Entry
-                              -> CInt -> CInt -> CInt -> CInt
-                              -> CString -> IO CInt
-
-foreign import ccall "archive_entry.h archive_entry_acl_add_entry_w"
-  archive_entry_acl_add_entry_w :: Ptr Entry
-                                -> CInt -> CInt -> CInt -> CInt
-                                -> CWString -> IO CInt
-
-foreign import ccall "archive_entry.h archive_entry_acl_reset"
-  archive_entry_acl_reset :: Ptr Entry -> IO CInt
-
-foreign import ccall "archive_entry.h archive_entry_acl_next"
-  archive_entry_acl_next :: Ptr Entry -> CInt
-                         -> Ptr CInt -> Ptr CInt -> Ptr CInt -> Ptr CInt
-                         -> Ptr CString -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_acl_next_w"
-  archive_entry_acl_next_w :: Ptr Entry -> CInt
-                           -> Ptr CInt -> Ptr CInt -> Ptr CInt -> Ptr CInt
-                           -> Ptr CWString -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_acl_count"
-  archive_entry_acl_count :: Ptr Entry -> CInt -> IO CInt
 
 
 foreign import ccall "archive_entry.h archive_entry_xattr_clear"
@@ -221,8 +196,8 @@ foreign import ccall "archive_entry.h archive_entry_mtime_nsec"
 foreign import ccall "archive_entry.h archive_entry_set_mtime"
   archive_entry_set_mtime :: Ptr Entry -> CTime -> CLong -> IO ()
 
-peekEntry :: Ptr Entry -> IO Entry
-peekEntry p = do
+peekEntry :: Ptr (Archive rw) -> Ptr Entry -> IO Entry
+peekEntry ar p = do
   hardlink <- archive_entry_hardlink_w p >>= peekCWString
   pathname <- archive_entry_pathname_w p >>= peekCWString
   sourcepath <- archive_entry_sourcepath_w p >>= peekCWString
@@ -252,10 +227,11 @@ peekEntry p = do
     sec <- archive_entry_birthtime p
     nsec <- fromIntegral <$> archive_entry_birthtime_nsec p
     pure TimeSpec {..}
+  acls <- getACLs ar p
   pure Entry {..}
 
-pokeEntry :: Ptr Entry -> Entry -> IO ()
-pokeEntry p (Entry {..}) = do
+pokeEntry :: Ptr (Archive rw) -> Ptr Entry -> Entry -> IO ()
+pokeEntry ar p (Entry {..}) = do
   withCWString hardlink $ archive_entry_copy_hardlink_w p
   withCWString pathname $ archive_entry_copy_pathname_w p
   withCWString sourcepath $ archive_entry_copy_sourcepath_w p
@@ -277,3 +253,67 @@ pokeEntry p (Entry {..}) = do
     TimeSpec {..} -> archive_entry_set_mtime p sec (fromIntegral nsec)
   case birthtime of
     TimeSpec {..} -> archive_entry_set_birthtime p sec (fromIntegral nsec)
+  setACLs ar p acls
+
+
+foreign import ccall "archive_entry.h archive_entry_acl_add_entry_w"
+  archive_entry_acl_add_entry_w :: Ptr Entry
+                                -> CInt  -- ^ type
+                                -> CInt  -- ^ permset
+                                -> CInt  -- ^ tag
+                                -> CInt  -- ^ qualifier
+                                -> CWString  -- ^ name
+                                -> IO CInt
+
+foreign import ccall "archive_entry.h archive_entry_acl_reset"
+  archive_entry_acl_reset :: Ptr Entry -> IO CInt
+
+foreign import ccall "archive_entry.h archive_entry_acl_next_w"
+  archive_entry_acl_next_w :: Ptr Entry
+                           -> CInt  -- ^ want type
+                           -> Ptr CInt  -- ^ type
+                           -> Ptr CInt  -- ^ permset
+                           -> Ptr CInt  -- ^ tag
+                           -> Ptr CInt  -- ^ qualifier
+                           -> Ptr CWString  -- ^ name
+                           -> IO CInt
+
+getACLs :: Ptr (Archive rw) -> Ptr Entry -> IO [ACL]
+getACLs ar entry = do
+  _ <- archive_entry_acl_reset entry
+  let producer =
+        alloca $ \pAclType ->
+        alloca $ \pPermset ->
+        alloca $ \pTag ->
+        alloca $ \pQualifier ->
+        alloca $ \pName -> do
+          eof <- archive_entry_acl_next_w entry aclTypeMask
+                   pAclType pPermset pTag pQualifier pName
+                 >>= checkArchiveError ar
+          if eof then pure Nothing else do
+            aclType <- toEnum . fromIntegral <$> peek pAclType
+            permset <- fromIntegral <$> peek pPermset
+            tag <- toEnum . fromIntegral <$> peek pTag
+            qualifier <- fromIntegral <$> peek pQualifier
+            name <- peek pName >>= peekCWString
+            pure (Just ACL {..})
+  makeInputStream producer >>= S.toList
+
+foreign import ccall "archive_entry.h archive_entry_acl_clear"
+  archive_entry_acl_clear :: Ptr Entry -> IO ()
+
+setACLs :: Ptr (Archive rw) -> Ptr Entry -> [ACL] -> IO ()
+setACLs ar entry acls = do
+  archive_entry_acl_clear entry
+  mapM_ addACL acls
+  where
+    addACL (ACL {..}) =
+      withCWString name $ \pName ->
+        archive_entry_acl_add_entry_w
+          entry
+          (fromIntegral $ fromEnum aclType)
+          (fromIntegral permset)
+          (fromIntegral $ fromEnum tag)
+          (fromIntegral qualifier)
+          pName
+        >>= checkArchiveError_ ar

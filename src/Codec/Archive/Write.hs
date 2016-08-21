@@ -191,7 +191,7 @@ foreign import ccall "archive.h archive_write_header"
 archiveWriteEntry :: Ptr (Archive W) -> Entry -> IO ()
 archiveWriteEntry ar entry =
   withEntry $ \en -> do
-    pokeEntry en entry
+    pokeEntry ar en entry
     archive_write_header ar en >>= checkArchiveError_ ar
 
 

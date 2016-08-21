@@ -61,7 +61,7 @@ archiveReadEntry :: Ptr (Archive R) -> IO (Maybe Entry)
 archiveReadEntry ar =
   withEntry $ \en -> do
     eof <- archive_read_next_header2 ar en >>= checkArchiveError ar
-    if eof then pure Nothing else Just <$> peekEntry en
+    if eof then pure Nothing else Just <$> peekEntry ar en
 
 
 archiveReadDataInto :: Ptr (Archive R) -> Ptr () -> CSize -> IO Bool

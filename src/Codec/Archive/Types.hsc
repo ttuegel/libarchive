@@ -4,7 +4,8 @@
 module Codec.Archive.Types
        ( ArchiveError(..)
        , Archive, R, W
-       , Entry(..), TimeSpec(..)
+       , Entry(..), ACL(..), ACLType(..), aclTypeMask
+       , TimeSpec(..)
        , Format(..), Filter(..)
          -- * Courtesy exports
        , DeviceID
@@ -13,16 +14,20 @@ module Codec.Archive.Types
        , FileMode
        , GroupID
        , LinkCount
-       , Int64
+       , Int32, Int64
        , UserID
        ) where
 
 import Control.Exception ( Exception )
-import Data.Int ( Int64 )
+import Data.Bits
+import Data.Int ( Int32, Int64 )
 import Data.Typeable
 import Foreign.C.Error ( Errno(..) )
+import Foreign.C.Types ( CInt )
 import System.Posix.Types
        ( DeviceID, EpochTime, FileMode, GroupID, LinkCount, UserID )
+
+#include <archive_entry.h>
 
 
 deriving instance Show Errno
@@ -62,7 +67,68 @@ data Entry = Entry { hardlink :: !FilePath
                    , mtime :: !TimeSpec
                    , ctime :: !TimeSpec
                    , birthtime :: !TimeSpec
+                   , acls :: [ACL]
                    }
+
+data ACL = ACL { aclType :: ACLType
+               , permset :: Int32
+               , tag :: ACLTag
+               , qualifier :: Int32
+               , name :: String
+               }
+
+data ACLType = TypeAccess
+             | TypeDefault
+             | TypeAllow
+             | TypeDeny
+             | TypeAudit
+             | TypeAlarm
+
+instance Enum ACLType where
+  fromEnum TypeAccess = #{const ARCHIVE_ENTRY_ACL_TYPE_ACCESS}
+  fromEnum TypeDefault = #{const ARCHIVE_ENTRY_ACL_TYPE_DEFAULT}
+  fromEnum TypeAllow = #{const ARCHIVE_ENTRY_ACL_TYPE_ALLOW}
+  fromEnum TypeDeny = #{const ARCHIVE_ENTRY_ACL_TYPE_DENY}
+  fromEnum TypeAudit = #{const ARCHIVE_ENTRY_ACL_TYPE_AUDIT}
+  fromEnum TypeAlarm = #{const ARCHIVE_ENTRY_ACL_TYPE_ALARM}
+
+  toEnum #{const ARCHIVE_ENTRY_ACL_TYPE_ACCESS} = TypeAccess
+  toEnum #{const ARCHIVE_ENTRY_ACL_TYPE_DEFAULT} = TypeDefault
+  toEnum #{const ARCHIVE_ENTRY_ACL_TYPE_ALLOW} = TypeAllow
+  toEnum #{const ARCHIVE_ENTRY_ACL_TYPE_DENY} = TypeDeny
+  toEnum #{const ARCHIVE_ENTRY_ACL_TYPE_AUDIT} = TypeAudit
+  toEnum #{const ARCHIVE_ENTRY_ACL_TYPE_ALARM} = TypeAlarm
+  toEnum t = error ("unknown ACL type " ++ show t)
+
+aclTypeMask :: CInt
+aclTypeMask = #{const ARCHIVE_ENTRY_ACL_TYPE_POSIX1E}
+              .|. #{const ARCHIVE_ENTRY_ACL_TYPE_NFS4}
+
+data ACLTag = TagUser
+            | TagUserObj
+            | TagGroup
+            | TagGroupObj
+            | TagMask
+            | TagOther
+            | TagEveryone
+
+instance Enum ACLTag where
+  fromEnum TagUser = #{const ARCHIVE_ENTRY_ACL_USER}
+  fromEnum TagUserObj = #{const ARCHIVE_ENTRY_ACL_USER_OBJ}
+  fromEnum TagGroup = #{const ARCHIVE_ENTRY_ACL_GROUP}
+  fromEnum TagGroupObj = #{const ARCHIVE_ENTRY_ACL_GROUP_OBJ}
+  fromEnum TagMask = #{const ARCHIVE_ENTRY_ACL_MASK}
+  fromEnum TagOther = #{const ARCHIVE_ENTRY_ACL_OTHER}
+  fromEnum TagEveryone = #{const ARCHIVE_ENTRY_ACL_EVERYONE}
+
+  toEnum #{const ARCHIVE_ENTRY_ACL_USER} = TagUser
+  toEnum #{const ARCHIVE_ENTRY_ACL_USER_OBJ} = TagUserObj
+  toEnum #{const ARCHIVE_ENTRY_ACL_GROUP} = TagGroup
+  toEnum #{const ARCHIVE_ENTRY_ACL_GROUP_OBJ} = TagGroupObj
+  toEnum #{const ARCHIVE_ENTRY_ACL_MASK} = TagMask
+  toEnum #{const ARCHIVE_ENTRY_ACL_OTHER} = TagOther
+  toEnum #{const ARCHIVE_ENTRY_ACL_EVERYONE} = TagEveryone
+  toEnum t = error ("unknown ACL tag " ++ show t)
 
 -- | 'TimeSpec' specifies a time with nanosecond resolution.
 data TimeSpec = TimeSpec { sec :: !EpochTime
