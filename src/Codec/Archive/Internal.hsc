@@ -20,8 +20,6 @@ import System.Posix.Types
 
 data Archive
 
-type ArchiveFormat = CInt
-
 data LinkResolver
 
 
@@ -194,7 +192,7 @@ foreign import ccall "archive.h archive_write_finish_entry"
 
 
 foreign import ccall "archive.h archive_format"
-  archive_format :: Ptr Archive -> IO ArchiveFormat
+  archive_format :: Ptr Archive -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_clear"
   archive_entry_clear :: Ptr Entry -> IO (Ptr Entry)
@@ -283,9 +281,7 @@ foreign import ccall "archive_entry.h archive_entry_linkresolver_free"
   archive_entry_linkresolver_free :: Ptr LinkResolver -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_linkresolver_set_strategy"
-  archive_entry_linkresolver_set_strategy :: Ptr LinkResolver
-                                          -> ArchiveFormat
-                                          -> IO ()
+  archive_entry_linkresolver_set_strategy :: Ptr LinkResolver -> CInt -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_hardlink"
@@ -508,3 +504,87 @@ peekEntry p = do
     nsec <- fromIntegral <$> archive_entry_birthtime_nsec p
     pure TimeSpec {..}
   pure Entry {..}
+
+
+data Format = Format7zip
+            | FormatArBSD
+            | FormatArSvr4
+            | FormatCpio
+            | FormatCpioNewc
+            | FormatGNUtar
+            | FormatISO9660
+            | FormatMtree
+            | FormatMtreeClassic
+            | FormatPax
+            | FormatPaxRestricted
+            | FormatRaw
+            | FormatShar
+            | FormatSharDump
+            | FormatUStar
+            | FormatV7tar
+            | FormatWARC
+            | FormatXar
+            | FormatZip
+
+
+setWriteFormat :: Ptr Archive -> Format -> IO ()
+setWriteFormat p fmt = set >>= checkArchiveError_ p where
+  set =
+    case fmt of
+      Format7zip -> archive_write_set_format_7zip p
+      FormatArBSD -> archive_write_set_format_ar_bsd p
+      FormatArSvr4 -> archive_write_set_format_ar_svr4 p
+      FormatCpio -> archive_write_set_format_cpio p
+      FormatCpioNewc -> archive_write_set_format_cpio_newc p
+      FormatGNUtar -> archive_write_set_format_gnutar p
+      FormatISO9660 -> archive_write_set_format_iso9660 p
+      FormatMtree -> archive_write_set_format_mtree p
+      FormatMtreeClassic -> archive_write_set_format_mtree_classic p
+      FormatPax -> archive_write_set_format_pax p
+      FormatPaxRestricted -> archive_write_set_format_pax_restricted p
+      FormatRaw -> archive_write_set_format_raw p
+      FormatShar -> archive_write_set_format_shar p
+      FormatSharDump -> archive_write_set_format_shar_dump p
+      FormatUStar -> archive_write_set_format_ustar p
+      FormatV7tar -> archive_write_set_format_v7tar p
+      FormatWARC -> archive_write_set_format_warc p
+      FormatXar -> archive_write_set_format_xar p
+      FormatZip -> archive_write_set_format_zip p
+
+
+data Filter = FilterB64encode
+            | FilterBzip2
+            | FilterCompress
+            | FilterGrzip
+            | FilterGzip
+            | FilterLrzip
+            | FilterLz4
+            | FilterLzip
+            | FilterLzma
+            | FilterLzop
+            | FilterNone
+            | FilterUuencode
+            | FilterXz
+
+
+addWriteFilter :: Ptr Archive -> Filter -> IO ()
+addWriteFilter p flt = add >>= checkArchiveError_ p where
+  add =
+    case flt of
+      FilterB64encode -> archive_write_add_filter_b64encode p
+      FilterBzip2 -> archive_write_add_filter_bzip2 p
+      FilterCompress -> archive_write_add_filter_compress p
+      FilterGrzip -> archive_write_add_filter_grzip p
+      FilterGzip -> archive_write_add_filter_gzip p
+      FilterLrzip -> archive_write_add_filter_lrzip p
+      FilterLz4 -> archive_write_add_filter_lz4 p
+      FilterLzip -> archive_write_add_filter_lzip p
+      FilterLzop -> archive_write_add_filter_lzop p
+      FilterNone -> archive_write_add_filter_none p
+      FilterUuencode -> archive_write_add_filter_uuencode p
+      FilterXz -> archive_write_add_filter_xz p
+
+
+setWriteFilters :: Ptr Archive -> [Filter] -> IO ()
+setWriteFilters p [] = addWriteFilter p FilterNone
+setWriteFilters p fs = mapM_ (addWriteFilter p) fs
