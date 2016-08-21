@@ -505,6 +505,30 @@ peekEntry p = do
     pure TimeSpec {..}
   pure Entry {..}
 
+pokeEntry :: Ptr Entry -> Entry -> IO ()
+pokeEntry p (Entry {..}) = do
+  withCWString hardlink $ archive_entry_copy_hardlink_w p
+  withCWString pathname $ archive_entry_copy_pathname_w p
+  withCWString sourcepath $ archive_entry_copy_sourcepath_w p
+  withCWString symlink $ archive_entry_copy_symlink_w p
+  archive_entry_set_mode p mode
+  archive_entry_set_filetype p filetype
+  archive_entry_set_gid p gid
+  archive_entry_set_uid p uid
+  archive_entry_set_size p size
+  archive_entry_set_dev p dev
+  archive_entry_set_ino64 p ino64
+  archive_entry_set_nlink p nlink
+  archive_entry_set_rdev p rdev
+  case atime of
+    TimeSpec {..} -> archive_entry_set_atime p sec (fromIntegral nsec)
+  case ctime of
+    TimeSpec {..} -> archive_entry_set_ctime p sec (fromIntegral nsec)
+  case mtime of
+    TimeSpec {..} -> archive_entry_set_mtime p sec (fromIntegral nsec)
+  case birthtime of
+    TimeSpec {..} -> archive_entry_set_birthtime p sec (fromIntegral nsec)
+
 
 data Format = Format7zip
             | FormatArBSD
