@@ -5,7 +5,6 @@ module Codec.Archive where
 import Codec.Archive.Read
 import Codec.Archive.Write
 import Data.ByteString ( ByteString )
-import Data.IORef
 import System.IO.Streams
        ( InputStream, OutputStream, makeInputStream, makeOutputStream, unRead )
 
