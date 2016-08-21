@@ -13,9 +13,7 @@ import Control.Exception
 import Data.ByteString ( ByteString )
 import qualified Data.ByteString as B
 import Data.Int
-import Data.Typeable
 import Foreign.C.Error
-import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Marshal.Alloc ( free, mallocBytes )
 import Foreign.Ptr ( Ptr, castPtr )
