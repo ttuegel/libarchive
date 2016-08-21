@@ -284,53 +284,29 @@ foreign import ccall "archive_entry.h archive_entry_linkresolver_set_strategy"
   archive_entry_linkresolver_set_strategy :: Ptr LinkResolver -> CInt -> IO ()
 
 
-foreign import ccall "archive_entry.h archive_entry_hardlink"
-  archive_entry_hardlink :: Ptr Entry -> IO CString
-
 foreign import ccall "archive_entry.h archive_entry_hardlink_w"
   archive_entry_hardlink_w :: Ptr Entry -> IO CWString
-
-foreign import ccall "archive_entry.h archive_entry_copy_hardlink"
-  archive_entry_copy_hardlink :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_hardlink_w"
   archive_entry_copy_hardlink_w :: Ptr Entry -> CWString -> IO ()
 
 
-foreign import ccall "archive_entry.h archive_entry_pathname"
-  archive_entry_pathname :: Ptr Entry -> IO CString
-
 foreign import ccall "archive_entry.h archive_entry_pathname_w"
   archive_entry_pathname_w :: Ptr Entry -> IO CWString
-
-foreign import ccall "archive_entry.h archive_entry_copy_pathname"
-  archive_entry_copy_pathname :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_pathname_w"
   archive_entry_copy_pathname_w :: Ptr Entry -> CWString -> IO ()
 
 
-foreign import ccall "archive_entry.h archive_entry_sourcepath"
-  archive_entry_sourcepath :: Ptr Entry -> IO CString
-
 foreign import ccall "archive_entry.h archive_entry_sourcepath_w"
   archive_entry_sourcepath_w :: Ptr Entry -> IO CWString
-
-foreign import ccall "archive_entry.h archive_entry_copy_sourcepath"
-  archive_entry_copy_sourcepath :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_sourcepath_w"
   archive_entry_copy_sourcepath_w :: Ptr Entry -> CWString -> IO ()
 
 
-foreign import ccall "archive_entry.h archive_entry_symlink"
-  archive_entry_symlink :: Ptr Entry -> IO CString
-
 foreign import ccall "archive_entry.h archive_entry_symlink_w"
   archive_entry_symlink_w :: Ptr Entry -> IO CWString
-
-foreign import ccall "archive_entry.h archive_entry_copy_symlink"
-  archive_entry_copy_symlink :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_symlink_w"
   archive_entry_copy_symlink_w :: Ptr Entry -> CWString -> IO ()
@@ -370,21 +346,12 @@ foreign import ccall "archive_entry.h archive_entry_size"
 foreign import ccall "archive_entry.h archive_entry_set_size"
   archive_entry_set_size :: Ptr Entry -> Int64 -> IO ()
 
-foreign import ccall "archive_entry.h archive_entry_unset_size"
-  archive_entry_unset_size :: Ptr Entry -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_size_is_set"
-  archive_entry_size_is_set :: Ptr Entry -> IO CInt
-
 
 foreign import ccall "archive_entry.h archive_entry_dev"
   archive_entry_dev :: Ptr Entry -> IO CDev
 
 foreign import ccall "archive_entry.h archive_entry_set_dev"
   archive_entry_set_dev :: Ptr Entry -> CDev -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_dev_is_set"
-  archive_entry_dev_is_set :: Ptr Entry -> IO CInt
 
 
 foreign import ccall "archive_entry.h archive_entry_ino64"
