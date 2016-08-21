@@ -6,14 +6,11 @@ module Codec.Archive.Entry
 
 import Control.Exception
 import Data.Int
-import Data.Typeable
-import Foreign.C.Error
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Ptr ( Ptr )
 import System.Posix.Types
 
-import Codec.Archive.Error
 import Codec.Archive.Types
 
 
