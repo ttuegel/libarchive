@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Codec.Archive.Read
-       ( withArchiveRead
+       ( withArchiveRead, archiveReadOpenFd
        , archiveReadEntry, archiveReadDataInto, archiveReadData
        , module Codec.Archive.Entry
        , module Codec.Archive.Error
@@ -44,6 +44,11 @@ withArchiveRead go =
 
 foreign import ccall "archive.h archive_read_open_fd"
   archive_read_open_fd :: Ptr (Archive R) -> Fd -> CSize -> IO CInt
+
+archiveReadOpenFd :: Ptr (Archive R) -> Fd -> CSize -> IO ()
+archiveReadOpenFd ar fd blocksize =
+  archive_read_open_fd ar fd blocksize >>= checkArchiveError_ ar
+
 
 foreign import ccall "archive.h archive_read_data"
   archive_read_data :: Ptr (Archive R) -> Ptr () -> CSize -> IO CSize
