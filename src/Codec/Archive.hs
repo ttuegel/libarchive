@@ -1,73 +1,46 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Codec.Archive where
 
-import Codec.Archive.Internal
-import Control.Exception ( Exception, bracket, throwIO )
-import Control.Monad ( when )
+import Codec.Archive.Read
+import Codec.Archive.Write
 import Data.ByteString ( ByteString )
-import qualified Data.ByteString as B
-import Data.Int ( Int64 )
-import Data.Typeable
-import Foreign.C.String
-import Foreign.C.Types ( CInt, CSize )
-import Foreign.Marshal.Alloc ( free, mallocBytes )
-import Foreign.Ptr ( Ptr, castPtr )
-import System.IO.Streams ( InputStream, makeInputStream, unRead )
-import System.Posix.Types
-       ( DeviceID, EpochTime, Fd, FileMode, GroupID, LinkCount, UserID )
-
-
-data ArchiveException = ArchiveException CInt
-  deriving ( Show, Typeable )
-
-instance Exception ArchiveException
+import Data.IORef
+import System.IO.Streams
+       ( InputStream, OutputStream, makeInputStream, makeOutputStream, unRead )
 
 
 data Event = E Entry | B ByteString
 
 
-archiveBufferSize :: CSize
-archiveBufferSize = 4096
-
-
 readArchive :: Fd -> (InputStream Event -> IO a) -> IO a
-readArchive fd go = bracket before after during
+readArchive fd go =
+  withArchiveRead $ \ar -> do
+    archiveReadOpenFd ar fd blocksize
+    let producer = do
+          dat <- archiveReadData ar
+          case dat of
+            Nothing -> fmap E <$> archiveReadEntry ar
+            Just _ -> fmap B <$> pure dat
+    first <- archiveReadEntry ar
+    stream <- case first of
+                Nothing -> makeInputStream (pure Nothing)
+                Just entry -> do
+                  s <- makeInputStream producer
+                  unRead (E entry) s
+                  pure s
+    go stream
   where
-    before = do
-      pa <- archive_read_new
-      _err <- archive_read_open_fd pa fd archiveBufferSize
-      when (_err < archiveOK) (throwIO $ ArchiveException _err)
-      _err <- archive_read_support_filter_all pa
-      when (_err < archiveOK) (throwIO $ ArchiveException _err)
-      pe <- archive_entry_new
-      buf <- mallocBytes (fromIntegral archiveBufferSize)
-      pure (pa, pe, buf)
+    blocksize = 4096
 
-    after (pa, pe, buf) = archive_entry_free pe >> archive_free pa >> free buf
 
-    during (pa, pe, buf) = do
-      let nextEntry = do
-            _err <- archive_read_next_header2 pa pe
-            if _err < archiveOK
-              then throwIO $ ArchiveException _err
-              else if _err == archiveEOF
-              then pure Nothing
-              else Just . E <$> peekEntry pe
-
-      first <- nextEntry
-
-      let streamer = do
-            len <- archive_read_data pa buf archiveBufferSize
-            if len > 0
-              then Just . B <$> B.packCStringLen (castPtr buf, fromIntegral len)
-              else nextEntry
-
-      stream <- case first of
-                  Nothing -> makeInputStream (pure Nothing)
-                  Just ev -> do
-                    s <- makeInputStream streamer
-                    unRead ev s
-                    pure s
-      go stream
+writeArchive :: Fd -> Format -> [Filter] -> (OutputStream Event -> IO a) -> IO a
+writeArchive fd format filters go =
+  withArchiveWrite format filters $ \ar -> do
+    archiveWriteOpenFd ar fd
+    let consumer Nothing = pure ()
+        consumer (Just ev) =
+          case ev of
+            E entry -> archiveWriteEntry ar entry
+            B block -> archiveWriteData ar block
+    makeOutputStream consumer >>= go
