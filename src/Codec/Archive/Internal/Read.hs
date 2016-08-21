@@ -1,13 +1,13 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Codec.Archive.Read
+module Codec.Archive.Internal.Read
        ( withArchiveRead, archiveReadOpenFd
        , archiveReadEntry, archiveReadDataInto, archiveReadData
          -- * Courtesy exports
-       , module Codec.Archive.Entry
-       , module Codec.Archive.Error
-       , module Codec.Archive.Types
+       , module Codec.Archive.Internal.Entry
+       , module Codec.Archive.Internal.Error
+       , module Codec.Archive.Internal.Types
        , Fd
        ) where
 
@@ -21,9 +21,9 @@ import Foreign.Marshal.Alloc ( free, mallocBytes )
 import Foreign.Ptr ( Ptr, castPtr )
 import System.Posix.Types
 
-import Codec.Archive.Entry
-import Codec.Archive.Error
-import Codec.Archive.Types
+import Codec.Archive.Internal.Entry
+import Codec.Archive.Internal.Error
+import Codec.Archive.Internal.Types
 
 
 foreign import ccall "archive.h archive_free"

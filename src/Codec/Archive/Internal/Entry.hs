@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module Codec.Archive.Entry
+module Codec.Archive.Internal.Entry
        ( withEntry, peekEntry, pokeEntry ) where
 
 import Control.Exception
@@ -17,8 +17,8 @@ import System.Posix.Types
 import System.IO.Streams ( makeInputStream )
 import qualified System.IO.Streams.List as S
 
-import Codec.Archive.Error
-import Codec.Archive.Types
+import Codec.Archive.Internal.Error
+import Codec.Archive.Internal.Types
 
 
 foreign import ccall "archive_entry.h archive_entry_new"

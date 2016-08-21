@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
-module Codec.Archive.Error
+module Codec.Archive.Internal.Error
        ( checkArchiveError, checkArchiveError_
        , checkArchiveReadError, checkArchiveWriteError
        ) where
@@ -14,7 +14,7 @@ import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Ptr ( Ptr )
 
-import Codec.Archive.Types
+import Codec.Archive.Internal.Types
 
 
 #include <archive.h>

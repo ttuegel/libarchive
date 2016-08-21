@@ -1,13 +1,13 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE ViewPatterns #-}
 
-module Codec.Archive.Write
+module Codec.Archive.Internal.Write
        ( withArchiveWrite, archiveWriteOpenFd
        , archiveWriteEntry, archiveWriteData
          -- * Courtesy exports
-       , module Codec.Archive.Entry
-       , module Codec.Archive.Error
-       , module Codec.Archive.Types
+       , module Codec.Archive.Internal.Entry
+       , module Codec.Archive.Internal.Error
+       , module Codec.Archive.Internal.Types
        , Fd
        ) where
 
@@ -20,9 +20,9 @@ import Foreign.C.Types
 import Foreign.Ptr ( Ptr, castPtr )
 import System.Posix.Types
 
-import Codec.Archive.Error
-import Codec.Archive.Entry ( pokeEntry, withEntry )
-import Codec.Archive.Types
+import Codec.Archive.Internal.Error
+import Codec.Archive.Internal.Entry ( pokeEntry, withEntry )
+import Codec.Archive.Internal.Types
 
 
 foreign import ccall "archive.h archive_write_add_filter_b64encode"

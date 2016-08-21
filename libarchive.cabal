@@ -12,11 +12,11 @@ cabal-version:       >=1.10
 library
   exposed-modules:
     Codec.Archive
-    Codec.Archive.Entry
-    Codec.Archive.Error
-    Codec.Archive.Read
-    Codec.Archive.Types
-    Codec.Archive.Write
+    Codec.Archive.Internal.Entry
+    Codec.Archive.Internal.Error
+    Codec.Archive.Internal.Read
+    Codec.Archive.Internal.Types
+    Codec.Archive.Internal.Write
   build-depends:
       base >=4.9 && <4.10
     , bytestring

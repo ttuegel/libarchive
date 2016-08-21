@@ -2,7 +2,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Codec.Archive.Types
+module Codec.Archive.Internal.Types
        ( ArchiveError(..)
        , Archive, R, W
        , Entry(..), ACL(..), ACLType(..), aclTypeMask, ACLTag(..)

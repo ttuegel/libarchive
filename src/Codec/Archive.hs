@@ -2,11 +2,12 @@
 
 module Codec.Archive where
 
-import Codec.Archive.Read
-import Codec.Archive.Write
 import Data.ByteString ( ByteString )
 import System.IO.Streams
        ( InputStream, OutputStream, makeInputStream, makeOutputStream, unRead )
+
+import Codec.Archive.Internal.Read
+import Codec.Archive.Internal.Write
 
 
 data Event = E Entry | B ByteString
