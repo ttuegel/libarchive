@@ -1,6 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
-module Codec.Archive where
+module Codec.Archive.Internal where
 
 import Data.Int
 import Foreign.C.String
