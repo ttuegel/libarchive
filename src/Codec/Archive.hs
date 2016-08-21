@@ -25,64 +25,6 @@ data ArchiveException = ArchiveException CInt
 instance Exception ArchiveException
 
 
-data TimeSpec = TimeSpec { sec :: !EpochTime
-                         , nsec :: !Int64
-                         }
-
-
-data Entry = Entry { hardlink :: !FilePath
-                   , pathname :: !FilePath
-                   , sourcepath :: !FilePath
-                   , symlink :: !FilePath
-                   , filetype :: !FileMode
-                   , mode :: !FileMode
-                   , gid :: !GroupID
-                   , uid :: !UserID
-                   , size :: !Int64
-                   , dev :: !DeviceID
-                   , ino64 :: !Int64
-                   , nlink :: !LinkCount
-                   , rdev :: !DeviceID
-                   , atime :: !TimeSpec
-                   , mtime :: !TimeSpec
-                   , ctime :: !TimeSpec
-                   , birthtime :: !TimeSpec
-                   }
-
-getEntry :: Ptr ArchiveEntry -> IO Entry
-getEntry p = do
-  hardlink <- archive_entry_hardlink_w p >>= peekCWString
-  pathname <- archive_entry_pathname_w p >>= peekCWString
-  sourcepath <- archive_entry_sourcepath_w p >>= peekCWString
-  symlink <- archive_entry_symlink_w p >>= peekCWString
-  mode <- archive_entry_mode p
-  filetype <- archive_entry_filetype p
-  gid <- archive_entry_gid p
-  uid <- archive_entry_uid p
-  size <- archive_entry_size p
-  dev <- archive_entry_dev p
-  ino64 <- archive_entry_ino64 p
-  nlink <- archive_entry_nlink p
-  rdev <- archive_entry_rdev p
-  atime <- do
-    sec <- archive_entry_atime p
-    nsec <- fromIntegral <$> archive_entry_atime_nsec p
-    pure TimeSpec {..}
-  mtime <- do
-    sec <- archive_entry_mtime p
-    nsec <- fromIntegral <$> archive_entry_mtime_nsec p
-    pure TimeSpec {..}
-  ctime <- do
-    sec <- archive_entry_ctime p
-    nsec <- fromIntegral <$> archive_entry_ctime_nsec p
-    pure TimeSpec {..}
-  birthtime <- do
-    sec <- archive_entry_birthtime p
-    nsec <- fromIntegral <$> archive_entry_birthtime_nsec p
-    pure TimeSpec {..}
-  pure Entry {..}
-
-
 data Event = E Entry | B ByteString
 
 
@@ -106,21 +48,21 @@ readArchive fd go = bracket before after during
     after (pa, pe, buf) = archive_entry_free pe >> archive_free pa >> free buf
 
     during (pa, pe, buf) = do
-      let next = do
+      let nextEntry = do
             _err <- archive_read_next_header2 pa pe
             if _err < archiveOK
               then throwIO $ ArchiveException _err
               else if _err == archiveEOF
               then pure Nothing
-              else Just . E <$> getEntry pe
+              else Just . E <$> peekEntry pe
 
-      first <- next
+      first <- nextEntry
 
       let streamer = do
             len <- archive_read_data pa buf archiveBufferSize
             if len > 0
               then Just . B <$> B.packCStringLen (castPtr buf, fromIntegral len)
-              else next
+              else nextEntry
 
       stream <- case first of
                   Nothing -> makeInputStream (pure Nothing)
