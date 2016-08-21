@@ -17,8 +17,10 @@ import System.Posix.Types
 #include <archive.h>
 #include <archive_entry.h>
 
+data R  -- ^ 'R' indicates an 'Archive' open for reading.
+data W  -- ^ 'W' indicates an 'Archive' open for writing.
 
-data Archive
+data Archive rw
 
 data LinkResolver
 
@@ -38,7 +40,7 @@ data ArchiveError = ArchiveError Errno String
 instance Exception ArchiveError
 
 
-checkArchiveError :: Ptr Archive -> CInt -> IO Bool
+checkArchiveError :: Ptr (Archive rw) -> CInt -> IO Bool
 checkArchiveError p err
   | err < archiveOK = do
       errno <- Errno <$> archive_errno p
@@ -49,150 +51,150 @@ checkArchiveError p err
 
 
 foreign import ccall "archive.h archive_errno"
-  archive_errno :: Ptr Archive -> IO CInt
+  archive_errno :: Ptr (Archive rw) -> IO CInt
 
 foreign import ccall "archive.h archive_error_string"
-  archive_error_string :: Ptr Archive -> IO CString
+  archive_error_string :: Ptr (Archive rw) -> IO CString
 
 
-checkArchiveError_ :: Ptr Archive -> CInt -> IO ()
+checkArchiveError_ :: Ptr (Archive rw) -> CInt -> IO ()
 checkArchiveError_ p err = checkArchiveError p err >> pure ()
 
 
 foreign import ccall "archive.h archive_free"
-  archive_free :: Ptr Archive -> IO CInt
+  archive_free :: Ptr (Archive rw) -> IO CInt
 
 
 foreign import ccall "archive.h archive_read_new"
-  archive_read_new :: IO (Ptr Archive)
+  archive_read_new :: IO (Ptr (Archive R))
 
 foreign import ccall "archive.h archive_read_support_filter_all"
-  archive_read_support_filter_all :: Ptr Archive -> IO CInt
+  archive_read_support_filter_all :: Ptr (Archive R) -> IO CInt
 
 foreign import ccall "archive.h archive_read_open_fd"
-  archive_read_open_fd :: Ptr Archive -> Fd -> CSize -> IO CInt
+  archive_read_open_fd :: Ptr (Archive R) -> Fd -> CSize -> IO CInt
 
 foreign import ccall "archive.h archive_read_data"
-  archive_read_data :: Ptr Archive -> Ptr () -> CSize -> IO CInt
+  archive_read_data :: Ptr (Archive R) -> Ptr () -> CSize -> IO CInt
 
 foreign import ccall "archive.h archive_read_next_header2"
-  archive_read_next_header2 :: Ptr Archive -> Ptr Entry -> IO CInt
+  archive_read_next_header2 :: Ptr (Archive R) -> Ptr Entry -> IO CInt
 
 
 foreign import ccall "archive.h archive_write_new"
-  archive_write_new :: IO (Ptr Archive)
+  archive_write_new :: IO (Ptr (Archive W))
 
 foreign import ccall "archive.h archive_write_open_fd"
-  archive_write_open_fd :: Ptr Archive -> Fd -> IO CInt
+  archive_write_open_fd :: Ptr (Archive W) -> Fd -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_b64encode"
-  archive_write_add_filter_b64encode :: Ptr Archive -> IO CInt
+  archive_write_add_filter_b64encode :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_bzip2"
-  archive_write_add_filter_bzip2 :: Ptr Archive -> IO CInt
+  archive_write_add_filter_bzip2 :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_compress"
-  archive_write_add_filter_compress :: Ptr Archive -> IO CInt
+  archive_write_add_filter_compress :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_grzip"
-  archive_write_add_filter_grzip :: Ptr Archive -> IO CInt
+  archive_write_add_filter_grzip :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_gzip"
-  archive_write_add_filter_gzip :: Ptr Archive -> IO CInt
+  archive_write_add_filter_gzip :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_lrzip"
-  archive_write_add_filter_lrzip :: Ptr Archive -> IO CInt
+  archive_write_add_filter_lrzip :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_lz4"
-  archive_write_add_filter_lz4 :: Ptr Archive -> IO CInt
+  archive_write_add_filter_lz4 :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_lzip"
-  archive_write_add_filter_lzip :: Ptr Archive -> IO CInt
+  archive_write_add_filter_lzip :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_lzma"
-  archive_write_add_filter_lzma :: Ptr Archive -> IO CInt
+  archive_write_add_filter_lzma :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_lzop"
-  archive_write_add_filter_lzop :: Ptr Archive -> IO CInt
+  archive_write_add_filter_lzop :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_none"
-  archive_write_add_filter_none :: Ptr Archive -> IO CInt
+  archive_write_add_filter_none :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_uuencode"
-  archive_write_add_filter_uuencode :: Ptr Archive -> IO CInt
+  archive_write_add_filter_uuencode :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_xz"
-  archive_write_add_filter_xz :: Ptr Archive -> IO CInt
+  archive_write_add_filter_xz :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_7zip"
-  archive_write_set_format_7zip :: Ptr Archive -> IO CInt
+  archive_write_set_format_7zip :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_ar_bsd"
-  archive_write_set_format_ar_bsd :: Ptr Archive -> IO CInt
+  archive_write_set_format_ar_bsd :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_ar_svr4"
-  archive_write_set_format_ar_svr4 :: Ptr Archive -> IO CInt
+  archive_write_set_format_ar_svr4 :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_cpio"
-  archive_write_set_format_cpio :: Ptr Archive -> IO CInt
+  archive_write_set_format_cpio :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_cpio_newc"
-  archive_write_set_format_cpio_newc :: Ptr Archive -> IO CInt
+  archive_write_set_format_cpio_newc :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_gnutar"
-  archive_write_set_format_gnutar :: Ptr Archive -> IO CInt
+  archive_write_set_format_gnutar :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_iso9660"
-  archive_write_set_format_iso9660 :: Ptr Archive -> IO CInt
+  archive_write_set_format_iso9660 :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_mtree"
-  archive_write_set_format_mtree :: Ptr Archive -> IO CInt
+  archive_write_set_format_mtree :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_mtree_classic"
-  archive_write_set_format_mtree_classic :: Ptr Archive -> IO CInt
+  archive_write_set_format_mtree_classic :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_pax"
-  archive_write_set_format_pax :: Ptr Archive -> IO CInt
+  archive_write_set_format_pax :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_pax_restricted"
-  archive_write_set_format_pax_restricted :: Ptr Archive -> IO CInt
+  archive_write_set_format_pax_restricted :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_raw"
-  archive_write_set_format_raw :: Ptr Archive -> IO CInt
+  archive_write_set_format_raw :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_shar"
-  archive_write_set_format_shar :: Ptr Archive -> IO CInt
+  archive_write_set_format_shar :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_shar_dump"
-  archive_write_set_format_shar_dump :: Ptr Archive -> IO CInt
+  archive_write_set_format_shar_dump :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_ustar"
-  archive_write_set_format_ustar :: Ptr Archive -> IO CInt
+  archive_write_set_format_ustar :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_v7tar"
-  archive_write_set_format_v7tar :: Ptr Archive -> IO CInt
+  archive_write_set_format_v7tar :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_warc"
-  archive_write_set_format_warc :: Ptr Archive -> IO CInt
+  archive_write_set_format_warc :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_xar"
-  archive_write_set_format_xar :: Ptr Archive -> IO CInt
+  archive_write_set_format_xar :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_set_format_zip"
-  archive_write_set_format_zip :: Ptr Archive -> IO CInt
+  archive_write_set_format_zip :: Ptr (Archive W) -> IO CInt
 
 foreign import ccall "archive.h archive_write_header"
-  archive_write_header :: Ptr Archive -> Ptr Entry -> IO CInt
+  archive_write_header :: Ptr (Archive W) -> Ptr Entry -> IO CInt
 
 foreign import ccall "archive.h archive_write_data"
-  archive_write_data :: Ptr Archive -> Ptr () -> CSize -> IO CSize
+  archive_write_data :: Ptr (Archive W) -> Ptr () -> CSize -> IO CSize
 
 foreign import ccall "archive.h archive_write_finish_entry"
-  archive_write_finish_entry :: Ptr Archive -> IO CInt
+  archive_write_finish_entry :: Ptr (Archive W) -> IO CInt
 
 
 foreign import ccall "archive.h archive_format"
-  archive_format :: Ptr Archive -> IO CInt
+  archive_format :: Ptr (Archive rw) -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_clear"
   archive_entry_clear :: Ptr Entry -> IO (Ptr Entry)
@@ -518,7 +520,7 @@ data Format = Format7zip
             | FormatZip
 
 
-setWriteFormat :: Ptr Archive -> Format -> IO ()
+setWriteFormat :: Ptr (Archive W) -> Format -> IO ()
 setWriteFormat p fmt = set >>= checkArchiveError_ p where
   set =
     case fmt of
@@ -558,7 +560,7 @@ data Filter = FilterB64encode
             | FilterXz
 
 
-addWriteFilter :: Ptr Archive -> Filter -> IO ()
+addWriteFilter :: Ptr (Archive W) -> Filter -> IO ()
 addWriteFilter p flt = add >>= checkArchiveError_ p where
   add =
     case flt of
@@ -576,6 +578,6 @@ addWriteFilter p flt = add >>= checkArchiveError_ p where
       FilterXz -> archive_write_add_filter_xz p
 
 
-setWriteFilters :: Ptr Archive -> [Filter] -> IO ()
+setWriteFilters :: Ptr (Archive W) -> [Filter] -> IO ()
 setWriteFilters p [] = addWriteFilter p FilterNone
 setWriteFilters p fs = mapM_ (addWriteFilter p) fs
