@@ -4,9 +4,11 @@
 module Codec.Archive.Read
        ( withArchiveRead, archiveReadOpenFd
        , archiveReadEntry, archiveReadDataInto, archiveReadData
+         -- * Courtesy exports
        , module Codec.Archive.Entry
        , module Codec.Archive.Error
        , module Codec.Archive.Types
+       , Fd
        ) where
 
 import Control.Exception
