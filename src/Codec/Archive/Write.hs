@@ -169,6 +169,7 @@ addWriteFilter p flt = add >>= checkArchiveError_ p where
       FilterLrzip -> archive_write_add_filter_lrzip p
       FilterLz4 -> archive_write_add_filter_lz4 p
       FilterLzip -> archive_write_add_filter_lzip p
+      FilterLzma -> archive_write_add_filter_lzma p
       FilterLzop -> archive_write_add_filter_lzop p
       FilterNone -> archive_write_add_filter_none p
       FilterUuencode -> archive_write_add_filter_uuencode p
