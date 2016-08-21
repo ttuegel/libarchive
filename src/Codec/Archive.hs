@@ -10,7 +10,7 @@ import Data.ByteString ( ByteString )
 import qualified Data.ByteString as B
 import Data.Typeable
 import Foreign.C.String
-import Foreign.C.Types ( CInt )
+import Foreign.C.Types ( CInt, CSize )
 import Foreign.Marshal.Alloc ( free, mallocBytes )
 import Foreign.Ptr ( Ptr, castPtr )
 import System.IO.Streams ( InputStream, makeInputStream, unRead )
@@ -27,6 +27,7 @@ data Entry = Entry { hardlink :: FilePath
                    , pathname :: FilePath
                    , sourcepath :: FilePath
                    , symlink :: FilePath
+                   , filetype :: FileMode
                    , mode :: FileMode
                    }
 
@@ -37,6 +38,7 @@ getEntry p = do
   sourcepath <- archive_entry_sourcepath_w p >>= peekCWString
   symlink <- archive_entry_symlink_w p >>= peekCWString
   mode <- archive_entry_mode p
+  filetype <- archive_entry_filetype p
   pure Entry {..}
 
 
