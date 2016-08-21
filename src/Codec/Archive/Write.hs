@@ -1,9 +1,8 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ViewPatterns #-}
 
 module Codec.Archive.Write
-       ( withArchiveWrite
+       ( withArchiveWrite, archiveWriteOpenFd
        , archiveWriteEntry, archiveWriteData
        , module Codec.Archive.Entry
        , module Codec.Archive.Error
@@ -23,15 +22,6 @@ import Codec.Archive.Error
 import Codec.Archive.Entry ( pokeEntry, withEntry )
 import Codec.Archive.Types
 
-
-foreign import ccall "archive.h archive_free"
-  archive_free :: Ptr (Archive rw) -> IO CInt
-
-foreign import ccall "archive.h archive_write_new"
-  archive_write_new :: IO (Ptr (Archive W))
-
-foreign import ccall "archive.h archive_write_open_fd"
-  archive_write_open_fd :: Ptr (Archive W) -> Fd -> IO CInt
 
 foreign import ccall "archive.h archive_write_add_filter_b64encode"
   archive_write_add_filter_b64encode :: Ptr (Archive W) -> IO CInt
@@ -179,6 +169,12 @@ setWriteFilters p [] = addWriteFilter p FilterNone
 setWriteFilters p fs = mapM_ (addWriteFilter p) fs
 
 
+foreign import ccall "archive.h archive_free"
+  archive_free :: Ptr (Archive rw) -> IO CInt
+
+foreign import ccall "archive.h archive_write_new"
+  archive_write_new :: IO (Ptr (Archive W))
+
 withArchiveWrite :: Format -> [Filter] -> (Ptr (Archive W) -> IO a) -> IO a
 withArchiveWrite format filters go =
   bracket archive_write_new archive_free $ \ar -> do
@@ -204,3 +200,11 @@ archiveWriteData :: Ptr (Archive W) -> ByteString -> IO ()
 archiveWriteData ar _bytes =
   B.useAsCStringLen _bytes $ \(castPtr -> _bytes, fromIntegral -> len) ->
     archive_write_data ar _bytes len >>= checkArchiveWriteError ar
+
+
+foreign import ccall "archive.h archive_write_open_fd"
+  archive_write_open_fd :: Ptr (Archive W) -> Fd -> IO CInt
+
+archiveWriteOpenFd :: Ptr (Archive W) -> Fd -> IO ()
+archiveWriteOpenFd ar fd =
+  archive_write_open_fd ar fd >>= checkArchiveError_ ar
