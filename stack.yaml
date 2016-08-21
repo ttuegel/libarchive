@@ -1,0 +1,7 @@
+flags: {}
+nix:
+  packages:
+  - cabal-install
+  - libarchive
+  enable: true
+resolver: ghc-8.0.1

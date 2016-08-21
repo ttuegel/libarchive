@@ -1,0 +1,19 @@
+name:                libarchive
+version:             0.1.0.0
+license:             BSD3
+license-file:        LICENSE
+author:              Thomas Tuegel
+maintainer:          ttuegel@gmail.com
+category:            Codec
+build-type:          Simple
+extra-source-files:  ChangeLog.md
+cabal-version:       >=1.10
+
+library
+  exposed-modules:
+    Codec.Archive
+  build-depends:
+      base >=4.9 && <4.10
+  hs-source-dirs: src
+  build-tools: hsc2hs
+  default-language: Haskell2010
