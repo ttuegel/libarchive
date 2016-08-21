@@ -9,13 +9,10 @@ module Codec.Archive.Error
        ) where
 
 import Control.Exception
-import Data.Int
-import Data.Typeable
 import Foreign.C.Error
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Ptr ( Ptr )
-import System.Posix.Types
 
 import Codec.Archive.Types
 
@@ -28,9 +25,6 @@ foreign import ccall "archive.h archive_errno"
 
 foreign import ccall "archive.h archive_error_string"
   archive_error_string :: Ptr (Archive rw) -> IO CString
-
-archiveEOF :: CInt
-archiveEOF = #{const ARCHIVE_EOF}
 
 archiveOK :: CInt
 archiveOK = #{const ARCHIVE_OK}
