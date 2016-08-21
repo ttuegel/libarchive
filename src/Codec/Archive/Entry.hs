@@ -1,15 +1,17 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Codec.Archive.Entry
        ( withEntry, peekEntry, pokeEntry ) where
 
 import Control.Exception
+import qualified Data.ByteString as B
 import Data.Int
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Marshal.Alloc ( alloca )
-import Foreign.Ptr ( Ptr )
+import Foreign.Ptr ( Ptr, castPtr )
 import Foreign.Storable
 import System.Posix.Types
 import System.IO.Streams ( makeInputStream )
@@ -27,25 +29,6 @@ foreign import ccall "archive_entry.h archive_entry_free"
 
 withEntry :: (Ptr Entry -> IO a) -> IO a
 withEntry = bracket archive_entry_new archive_entry_free
-
-
-foreign import ccall "archive_entry.h archive_entry_xattr_clear"
-  archive_entry_xattr_clear :: Ptr Entry -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_xattr_add_entry"
-  archive_entry_xattr_add_entry :: Ptr Entry
-                                -> CString -> CString -> CSize -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_xattr_count"
-  archive_entry_xattr_count :: Ptr Entry -> IO CInt
-
-foreign import ccall "archive_entry.h archive_entry_xattr_reset"
-  archive_entry_xattr_reset :: Ptr Entry -> IO CInt
-
-foreign import ccall "archive_entry.h archive_entry_xattr_next"
-  archive_entry_xattr_next :: Ptr Entry
-                           -> Ptr CString -> Ptr () -> Ptr CSize
-                           -> IO CInt
 
 
 foreign import ccall "archive_entry.h archive_entry_sparse_clear"
@@ -228,6 +211,7 @@ peekEntry ar p = do
     nsec <- fromIntegral <$> archive_entry_birthtime_nsec p
     pure TimeSpec {..}
   acls <- getACLs ar p
+  xattrs <- getXAttrs p
   pure Entry {..}
 
 pokeEntry :: Ptr (Archive rw) -> Ptr Entry -> Entry -> IO ()
@@ -254,6 +238,7 @@ pokeEntry ar p (Entry {..}) = do
   case birthtime of
     TimeSpec {..} -> archive_entry_set_birthtime p sec (fromIntegral nsec)
   setACLs ar p acls
+  setXAttrs p xattrs
 
 
 foreign import ccall "archive_entry.h archive_entry_acl_add_entry_w"
@@ -317,3 +302,52 @@ setACLs ar entry acls = do
           (fromIntegral qualifier)
           pName
         >>= checkArchiveError_ ar
+
+
+foreign import ccall "archive_entry.h archive_entry_xattr_reset"
+  archive_entry_xattr_reset :: Ptr Entry -> IO CInt
+
+foreign import ccall "archive_entry.h archive_entry_xattr_next"
+  archive_entry_xattr_next :: Ptr Entry
+                           -> Ptr CString
+                           -> Ptr (Ptr ())
+                           -> Ptr CSize
+                           -> IO CInt
+
+getXAttrs :: Ptr Entry -> IO [XAttr]
+getXAttrs entry = do
+  _ <- archive_entry_xattr_reset entry
+  let producer =
+        alloca $ \_pName ->
+        alloca $ \_pValue ->
+        alloca $ \pSize -> do
+          eof <- archive_entry_xattr_next entry _pName _pValue pSize
+          if eof < 0 then pure Nothing else do
+            _pName <- peek _pName
+            _pValue <- peek _pValue
+            len <- fromIntegral <$> peek pSize
+            name <- peekCString _pName
+            value <- B.packCStringLen (castPtr _pValue, len)
+            Just <$> pure XAttr {..}
+  makeInputStream producer >>= S.toList
+
+
+foreign import ccall "archive_entry.h archive_entry_xattr_clear"
+  archive_entry_xattr_clear :: Ptr Entry -> IO ()
+
+foreign import ccall "archive_entry.h archive_entry_xattr_add_entry"
+  archive_entry_xattr_add_entry :: Ptr Entry
+                                -> CString
+                                -> Ptr ()
+                                -> CSize
+                                -> IO ()
+
+setXAttrs :: Ptr Entry -> [XAttr] -> IO ()
+setXAttrs entry xattrs = do
+  archive_entry_xattr_clear entry
+  mapM_ addXAttr xattrs
+  where
+    addXAttr (XAttr {..}) =
+      withCString name $ \pName ->
+      B.useAsCStringLen value $ \(castPtr -> pValue, fromIntegral -> len) ->
+        archive_entry_xattr_add_entry entry pName pValue len

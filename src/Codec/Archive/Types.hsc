@@ -1,10 +1,12 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Codec.Archive.Types
        ( ArchiveError(..)
        , Archive, R, W
-       , Entry(..), ACL(..), ACLType(..), aclTypeMask
+       , Entry(..), ACL(..), ACLType(..), aclTypeMask, ACLTag(..)
+       , XAttr(..)
        , TimeSpec(..)
        , Format(..), Filter(..)
          -- * Courtesy exports
@@ -20,6 +22,7 @@ module Codec.Archive.Types
 
 import Control.Exception ( Exception )
 import Data.Bits
+import Data.ByteString ( ByteString )
 import Data.Int ( Int32, Int64 )
 import Data.Typeable
 import Foreign.C.Error ( Errno(..) )
@@ -68,13 +71,14 @@ data Entry = Entry { hardlink :: !FilePath
                    , ctime :: !TimeSpec
                    , birthtime :: !TimeSpec
                    , acls :: [ACL]
+                   , xattrs :: [XAttr]
                    }
 
-data ACL = ACL { aclType :: ACLType
-               , permset :: Int32
-               , tag :: ACLTag
-               , qualifier :: Int32
-               , name :: String
+data ACL = ACL { aclType :: !ACLType
+               , permset :: !Int32
+               , tag :: !ACLTag
+               , qualifier :: !Int32
+               , name :: !String
                }
 
 data ACLType = TypeAccess
@@ -129,6 +133,10 @@ instance Enum ACLTag where
   toEnum #{const ARCHIVE_ENTRY_ACL_OTHER} = TagOther
   toEnum #{const ARCHIVE_ENTRY_ACL_EVERYONE} = TagEveryone
   toEnum t = error ("unknown ACL tag " ++ show t)
+
+data XAttr = XAttr { name :: !String
+                   , value :: !ByteString
+                   }
 
 -- | 'TimeSpec' specifies a time with nanosecond resolution.
 data TimeSpec = TimeSpec { sec :: !EpochTime
