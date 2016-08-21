@@ -31,24 +31,6 @@ withEntry :: (Ptr Entry -> IO a) -> IO a
 withEntry = bracket archive_entry_new archive_entry_free
 
 
-foreign import ccall "archive_entry.h archive_entry_sparse_clear"
-  archive_entry_sparse_clear :: Ptr Entry -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_sparse_add_entry"
-  archive_entry_sparse_add_entry :: Ptr Entry
-                                 -> Int64 -> Int64 -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_sparse_count"
-  archive_entry_sparse_count :: Ptr Entry -> IO CInt
-
-foreign import ccall "archive_entry.h archive_entry_sparse_reset"
-  archive_entry_sparse_reset :: Ptr Entry -> IO CInt
-
-foreign import ccall "archive_entry.h archive_entry_sparse_next"
-  archive_entry_sparse_next :: Ptr Entry
-                            -> Ptr Int64 -> Ptr Int64 -> IO CInt
-
-
 foreign import ccall "archive_entry.h archive_entry_hardlink_w"
   archive_entry_hardlink_w :: Ptr Entry -> IO CWString
 
