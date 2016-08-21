@@ -4,7 +4,6 @@
 module Codec.Archive.Types
        ( ArchiveError(..)
        , Archive, R, W
-       , LinkResolver
        , Entry(..), TimeSpec(..)
        , Format(..), Filter(..)
          -- * Courtesy exports
@@ -43,9 +42,6 @@ data Archive rw  -- ^ A handle to an open archive. The phantom type parameter
 
 data R  -- ^ 'R' indicates an 'Archive' open for reading.
 data W  -- ^ 'W' indicates an 'Archive' open for writing.
-
-
-data LinkResolver
 
 
 -- | An 'Entry' represents one file header in an archive.

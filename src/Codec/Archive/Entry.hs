@@ -91,16 +91,6 @@ foreign import ccall "archive_entry.h archive_entry_sparse_next"
                             -> Ptr Int64 -> Ptr Int64 -> IO CInt
 
 
-foreign import ccall "archive_entry.h archive_entry_linkresolver_new"
-  archive_entry_linkresolver_new :: IO (Ptr LinkResolver)
-
-foreign import ccall "archive_entry.h archive_entry_linkresolver_free"
-  archive_entry_linkresolver_free :: Ptr LinkResolver -> IO ()
-
-foreign import ccall "archive_entry.h archive_entry_linkresolver_set_strategy"
-  archive_entry_linkresolver_set_strategy :: Ptr LinkResolver -> CInt -> IO ()
-
-
 foreign import ccall "archive_entry.h archive_entry_hardlink_w"
   archive_entry_hardlink_w :: Ptr Entry -> IO CWString
 
