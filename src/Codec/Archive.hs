@@ -43,19 +43,21 @@ getEntry p = do
 data Event = E Entry | B ByteString
 
 
+archiveBufferSize :: CSize
+archiveBufferSize = 4096
+
+
 readArchive :: Fd -> (InputStream Event -> IO a) -> IO a
 readArchive fd go = bracket before after during
   where
-    bufsize = 4096
-
     before = do
       pa <- archive_read_new
-      _err <- archive_read_open_fd pa fd bufsize
+      _err <- archive_read_open_fd pa fd archiveBufferSize
       when (_err < archiveOK) (throwIO $ ArchiveException _err)
       _err <- archive_read_support_filter_all pa
       when (_err < archiveOK) (throwIO $ ArchiveException _err)
       pe <- archive_entry_new
-      buf <- mallocBytes (fromIntegral bufsize)
+      buf <- mallocBytes (fromIntegral archiveBufferSize)
       pure (pa, pe, buf)
 
     after (pa, pe, buf) = archive_entry_free pe >> archive_free pa >> free buf
@@ -72,7 +74,7 @@ readArchive fd go = bracket before after during
       first <- next
 
       let streamer = do
-            len <- archive_read_data pa buf bufsize
+            len <- archive_read_data pa buf archiveBufferSize
             if len > 0
               then Just . B <$> B.packCStringLen (castPtr buf, fromIntegral len)
               else next
