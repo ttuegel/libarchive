@@ -45,6 +45,9 @@ foreign import ccall "archive.h archive_read_data_block"
   archive_read_data_block :: Ptr Archive
                           -> Ptr () -> Ptr CSize -> Ptr Int64 -> IO CInt
 
+foreign import ccall "archive.h archive_read_next_header2"
+  archive_read_next_header2 :: Ptr Archive -> Ptr ArchiveEntry -> IO CInt
+
 
 foreign import ccall "archive.h archive_write_new"
   archive_write_new :: IO (Ptr Archive)
