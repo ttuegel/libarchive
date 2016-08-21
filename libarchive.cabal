@@ -11,9 +11,14 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:
-    Codec.Archive.Internal
+    Codec.Archive.Entry
+    Codec.Archive.Error
+    Codec.Archive.Read
+    Codec.Archive.Types
+    Codec.Archive.Write
   build-depends:
       base >=4.9 && <4.10
+    , bytestring
   hs-source-dirs: src
   build-tools: hsc2hs
   default-language: Haskell2010
