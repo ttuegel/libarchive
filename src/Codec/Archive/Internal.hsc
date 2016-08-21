@@ -1,9 +1,14 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Codec.Archive.Internal where
 
+import Control.Exception
 import Data.Int
+import Data.Typeable
+import Foreign.C.Error
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.Ptr ( Ptr )
@@ -25,6 +30,35 @@ archiveEOF = #{const ARCHIVE_EOF}
 
 archiveOK :: CInt
 archiveOK = #{const ARCHIVE_OK}
+
+
+deriving instance Show Errno
+
+data ArchiveError = ArchiveError Errno String
+  deriving ( Show, Typeable )
+
+instance Exception ArchiveError
+
+
+checkArchiveError :: Ptr Archive -> CInt -> IO Bool
+checkArchiveError p err
+  | err < archiveOK = do
+      errno <- Errno <$> archive_errno p
+      errstr <- archive_error_string p >>= peekCAString
+      throwIO (ArchiveError errno errstr)
+  | err == archiveOK = pure False
+  | otherwise = pure True
+
+
+foreign import ccall "archive.h archive_errno"
+  archive_errno :: Ptr Archive -> IO CInt
+
+foreign import ccall "archive.h archive_error_string"
+  archive_error_string :: Ptr Archive -> IO CString
+
+
+checkArchiveError_ :: Ptr Archive -> CInt -> IO ()
+checkArchiveError_ p err = checkArchiveError p err >> pure ()
 
 
 foreign import ccall "archive.h archive_free"
