@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Codec.Archive.Internal where
 
@@ -13,8 +14,6 @@ import System.Posix.Types
 
 
 data Archive
-
-data ArchiveEntry
 
 type ArchiveFormat = CInt
 
@@ -41,12 +40,11 @@ foreign import ccall "archive.h archive_read_support_filter_all"
 foreign import ccall "archive.h archive_read_open_fd"
   archive_read_open_fd :: Ptr Archive -> Fd -> CSize -> IO CInt
 
-foreign import ccall "archive.h archive_read_data_block"
-  archive_read_data_block :: Ptr Archive
-                          -> Ptr () -> Ptr CSize -> Ptr Int64 -> IO CInt
+foreign import ccall "archive.h archive_read_data"
+  archive_read_data :: Ptr Archive -> Ptr () -> CSize -> IO CInt
 
 foreign import ccall "archive.h archive_read_next_header2"
-  archive_read_next_header2 :: Ptr Archive -> Ptr ArchiveEntry -> IO CInt
+  archive_read_next_header2 :: Ptr Archive -> Ptr Entry -> IO CInt
 
 
 foreign import ccall "archive.h archive_write_new"
@@ -152,7 +150,7 @@ foreign import ccall "archive.h archive_write_set_format_zip"
   archive_write_set_format_zip :: Ptr Archive -> IO CInt
 
 foreign import ccall "archive.h archive_write_header"
-  archive_write_header :: Ptr Archive -> Ptr ArchiveEntry -> IO CInt
+  archive_write_header :: Ptr Archive -> Ptr Entry -> IO CInt
 
 foreign import ccall "archive.h archive_write_data"
   archive_write_data :: Ptr Archive -> Ptr () -> CSize -> IO CSize
@@ -165,82 +163,82 @@ foreign import ccall "archive.h archive_format"
   archive_format :: Ptr Archive -> IO ArchiveFormat
 
 foreign import ccall "archive_entry.h archive_entry_clear"
-  archive_entry_clear :: Ptr ArchiveEntry -> IO (Ptr ArchiveEntry)
+  archive_entry_clear :: Ptr Entry -> IO (Ptr Entry)
 
 foreign import ccall "archive_entry.h archive_entry_clone"
-  archive_entry_clone :: Ptr ArchiveEntry -> IO (Ptr ArchiveEntry)
+  archive_entry_clone :: Ptr Entry -> IO (Ptr Entry)
 
 foreign import ccall "archive_entry.h archive_entry_new"
-  archive_entry_new :: IO (Ptr ArchiveEntry)
+  archive_entry_new :: IO (Ptr Entry)
 
 foreign import ccall "archive_entry.h archive_entry_free"
-  archive_entry_free :: Ptr ArchiveEntry -> IO ()
+  archive_entry_free :: Ptr Entry -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_acl_clear"
-  archive_entry_acl_clear :: Ptr ArchiveEntry -> IO ()
+  archive_entry_acl_clear :: Ptr Entry -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_acl_add_entry"
-  archive_entry_acl_add_entry :: Ptr ArchiveEntry
+  archive_entry_acl_add_entry :: Ptr Entry
                               -> CInt -> CInt -> CInt -> CInt
                               -> CString -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_acl_add_entry_w"
-  archive_entry_acl_add_entry_w :: Ptr ArchiveEntry
+  archive_entry_acl_add_entry_w :: Ptr Entry
                                 -> CInt -> CInt -> CInt -> CInt
                                 -> CWString -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_acl_reset"
-  archive_entry_acl_reset :: Ptr ArchiveEntry -> IO CInt
+  archive_entry_acl_reset :: Ptr Entry -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_acl_next"
-  archive_entry_acl_next :: Ptr ArchiveEntry -> CInt
+  archive_entry_acl_next :: Ptr Entry -> CInt
                          -> Ptr CInt -> Ptr CInt -> Ptr CInt -> Ptr CInt
                          -> Ptr CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_acl_next_w"
-  archive_entry_acl_next_w :: Ptr ArchiveEntry -> CInt
+  archive_entry_acl_next_w :: Ptr Entry -> CInt
                            -> Ptr CInt -> Ptr CInt -> Ptr CInt -> Ptr CInt
                            -> Ptr CWString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_acl_count"
-  archive_entry_acl_count :: Ptr ArchiveEntry -> CInt -> IO CInt
+  archive_entry_acl_count :: Ptr Entry -> CInt -> IO CInt
 
 
 foreign import ccall "archive_entry.h archive_entry_xattr_clear"
-  archive_entry_xattr_clear :: Ptr ArchiveEntry -> IO ()
+  archive_entry_xattr_clear :: Ptr Entry -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_xattr_add_entry"
-  archive_entry_xattr_add_entry :: Ptr ArchiveEntry
+  archive_entry_xattr_add_entry :: Ptr Entry
                                 -> CString -> CString -> CSize -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_xattr_count"
-  archive_entry_xattr_count :: Ptr ArchiveEntry -> IO CInt
+  archive_entry_xattr_count :: Ptr Entry -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_xattr_reset"
-  archive_entry_xattr_reset :: Ptr ArchiveEntry -> IO CInt
+  archive_entry_xattr_reset :: Ptr Entry -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_xattr_next"
-  archive_entry_xattr_next :: Ptr ArchiveEntry
+  archive_entry_xattr_next :: Ptr Entry
                            -> Ptr CString -> Ptr () -> Ptr CSize
                            -> IO CInt
 
 
 foreign import ccall "archive_entry.h archive_entry_sparse_clear"
-  archive_entry_sparse_clear :: Ptr ArchiveEntry -> IO ()
+  archive_entry_sparse_clear :: Ptr Entry -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_sparse_add_entry"
-  archive_entry_sparse_add_entry :: Ptr ArchiveEntry
+  archive_entry_sparse_add_entry :: Ptr Entry
                                  -> Int64 -> Int64 -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_sparse_count"
-  archive_entry_sparse_count :: Ptr ArchiveEntry -> IO CInt
+  archive_entry_sparse_count :: Ptr Entry -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_sparse_reset"
-  archive_entry_sparse_reset :: Ptr ArchiveEntry -> IO CInt
+  archive_entry_sparse_reset :: Ptr Entry -> IO CInt
 
 foreign import ccall "archive_entry.h archive_entry_sparse_next"
-  archive_entry_sparse_next :: Ptr ArchiveEntry
+  archive_entry_sparse_next :: Ptr Entry
                             -> Ptr Int64 -> Ptr Int64 -> IO CInt
 
 
@@ -257,164 +255,222 @@ foreign import ccall "archive_entry.h archive_entry_linkresolver_set_strategy"
 
 
 foreign import ccall "archive_entry.h archive_entry_hardlink"
-  archive_entry_hardlink :: Ptr ArchiveEntry -> IO CString
+  archive_entry_hardlink :: Ptr Entry -> IO CString
 
 foreign import ccall "archive_entry.h archive_entry_hardlink_w"
-  archive_entry_hardlink_w :: Ptr ArchiveEntry -> IO CWString
+  archive_entry_hardlink_w :: Ptr Entry -> IO CWString
 
 foreign import ccall "archive_entry.h archive_entry_copy_hardlink"
-  archive_entry_copy_hardlink :: Ptr ArchiveEntry -> CString -> IO ()
+  archive_entry_copy_hardlink :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_hardlink_w"
-  archive_entry_copy_hardlink_w :: Ptr ArchiveEntry -> CWString -> IO ()
+  archive_entry_copy_hardlink_w :: Ptr Entry -> CWString -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_pathname"
-  archive_entry_pathname :: Ptr ArchiveEntry -> IO CString
+  archive_entry_pathname :: Ptr Entry -> IO CString
 
 foreign import ccall "archive_entry.h archive_entry_pathname_w"
-  archive_entry_pathname_w :: Ptr ArchiveEntry -> IO CWString
+  archive_entry_pathname_w :: Ptr Entry -> IO CWString
 
 foreign import ccall "archive_entry.h archive_entry_copy_pathname"
-  archive_entry_copy_pathname :: Ptr ArchiveEntry -> CString -> IO ()
+  archive_entry_copy_pathname :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_pathname_w"
-  archive_entry_copy_pathname_w :: Ptr ArchiveEntry -> CWString -> IO ()
+  archive_entry_copy_pathname_w :: Ptr Entry -> CWString -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_sourcepath"
-  archive_entry_sourcepath :: Ptr ArchiveEntry -> IO CString
+  archive_entry_sourcepath :: Ptr Entry -> IO CString
 
 foreign import ccall "archive_entry.h archive_entry_sourcepath_w"
-  archive_entry_sourcepath_w :: Ptr ArchiveEntry -> IO CWString
+  archive_entry_sourcepath_w :: Ptr Entry -> IO CWString
 
 foreign import ccall "archive_entry.h archive_entry_copy_sourcepath"
-  archive_entry_copy_sourcepath :: Ptr ArchiveEntry -> CString -> IO ()
+  archive_entry_copy_sourcepath :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_sourcepath_w"
-  archive_entry_copy_sourcepath_w :: Ptr ArchiveEntry -> CWString -> IO ()
+  archive_entry_copy_sourcepath_w :: Ptr Entry -> CWString -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_symlink"
-  archive_entry_symlink :: Ptr ArchiveEntry -> IO CString
+  archive_entry_symlink :: Ptr Entry -> IO CString
 
 foreign import ccall "archive_entry.h archive_entry_symlink_w"
-  archive_entry_symlink_w :: Ptr ArchiveEntry -> IO CWString
+  archive_entry_symlink_w :: Ptr Entry -> IO CWString
 
 foreign import ccall "archive_entry.h archive_entry_copy_symlink"
-  archive_entry_copy_symlink :: Ptr ArchiveEntry -> CString -> IO ()
+  archive_entry_copy_symlink :: Ptr Entry -> CString -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_copy_symlink_w"
-  archive_entry_copy_symlink_w :: Ptr ArchiveEntry -> CWString -> IO ()
+  archive_entry_copy_symlink_w :: Ptr Entry -> CWString -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_gid"
-  archive_entry_gid :: Ptr ArchiveEntry -> IO CGid
+  archive_entry_gid :: Ptr Entry -> IO CGid
 
 foreign import ccall "archive_entry.h archive_entry_set_gid"
-  archive_entry_set_gid :: Ptr ArchiveEntry -> CGid -> IO ()
+  archive_entry_set_gid :: Ptr Entry -> CGid -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_uid"
-  archive_entry_uid :: Ptr ArchiveEntry -> IO CUid
+  archive_entry_uid :: Ptr Entry -> IO CUid
 
 foreign import ccall "archive_entry.h archive_entry_set_uid"
-  archive_entry_set_uid :: Ptr ArchiveEntry -> CUid -> IO ()
+  archive_entry_set_uid :: Ptr Entry -> CUid -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_filetype"
-  archive_entry_filetype :: Ptr ArchiveEntry -> IO CMode
+  archive_entry_filetype :: Ptr Entry -> IO CMode
 
 foreign import ccall "archive_entry.h archive_entry_set_filetype"
-  archive_entry_set_filetype :: Ptr ArchiveEntry -> CMode -> IO ()
+  archive_entry_set_filetype :: Ptr Entry -> CMode -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_mode"
-  archive_entry_mode :: Ptr ArchiveEntry -> IO CMode
+  archive_entry_mode :: Ptr Entry -> IO CMode
 
 foreign import ccall "archive_entry.h archive_entry_set_mode"
-  archive_entry_set_mode :: Ptr ArchiveEntry -> CMode -> IO ()
+  archive_entry_set_mode :: Ptr Entry -> CMode -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_size"
-  archive_entry_size :: Ptr ArchiveEntry -> IO Int64
+  archive_entry_size :: Ptr Entry -> IO Int64
 
 foreign import ccall "archive_entry.h archive_entry_set_size"
-  archive_entry_set_size :: Ptr ArchiveEntry -> Int64 -> IO ()
+  archive_entry_set_size :: Ptr Entry -> Int64 -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_unset_size"
-  archive_entry_unset_size :: Ptr ArchiveEntry -> IO ()
+  archive_entry_unset_size :: Ptr Entry -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_size_is_set"
-  archive_entry_size_is_set :: Ptr ArchiveEntry -> IO CInt
+  archive_entry_size_is_set :: Ptr Entry -> IO CInt
 
 
 foreign import ccall "archive_entry.h archive_entry_dev"
-  archive_entry_dev :: Ptr ArchiveEntry -> IO CDev
+  archive_entry_dev :: Ptr Entry -> IO CDev
 
 foreign import ccall "archive_entry.h archive_entry_set_dev"
-  archive_entry_set_dev :: Ptr ArchiveEntry -> CDev -> IO ()
+  archive_entry_set_dev :: Ptr Entry -> CDev -> IO ()
 
 foreign import ccall "archive_entry.h archive_entry_dev_is_set"
-  archive_entry_dev_is_set :: Ptr ArchiveEntry -> IO CInt
+  archive_entry_dev_is_set :: Ptr Entry -> IO CInt
 
 
 foreign import ccall "archive_entry.h archive_entry_ino64"
-  archive_entry_ino64 :: Ptr ArchiveEntry -> IO Int64
+  archive_entry_ino64 :: Ptr Entry -> IO Int64
 
 foreign import ccall "archive_entry.h archive_entry_set_ino64"
-  archive_entry_set_ino64 :: Ptr ArchiveEntry -> Int64 -> IO ()
+  archive_entry_set_ino64 :: Ptr Entry -> Int64 -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_nlink"
-  archive_entry_nlink :: Ptr ArchiveEntry -> IO CNlink
+  archive_entry_nlink :: Ptr Entry -> IO CNlink
 
 foreign import ccall "archive_entry.h archive_entry_set_nlink"
-  archive_entry_set_nlink :: Ptr ArchiveEntry -> CNlink -> IO ()
+  archive_entry_set_nlink :: Ptr Entry -> CNlink -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_rdev"
-  archive_entry_rdev :: Ptr ArchiveEntry -> IO CDev
+  archive_entry_rdev :: Ptr Entry -> IO CDev
 
 foreign import ccall "archive_entry.h archive_entry_set_rdev"
-  archive_entry_set_rdev :: Ptr ArchiveEntry -> CDev -> IO ()
+  archive_entry_set_rdev :: Ptr Entry -> CDev -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_atime"
-  archive_entry_atime :: Ptr ArchiveEntry -> IO CTime
+  archive_entry_atime :: Ptr Entry -> IO CTime
 
 foreign import ccall "archive_entry.h archive_entry_atime_nsec"
-  archive_entry_atime_nsec :: Ptr ArchiveEntry -> IO CLong
+  archive_entry_atime_nsec :: Ptr Entry -> IO CLong
 
 foreign import ccall "archive_entry.h archive_entry_set_atime"
-  archive_entry_set_atime :: Ptr ArchiveEntry -> CTime -> CLong -> IO ()
+  archive_entry_set_atime :: Ptr Entry -> CTime -> CLong -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_birthtime"
-  archive_entry_birthtime :: Ptr ArchiveEntry -> IO CTime
+  archive_entry_birthtime :: Ptr Entry -> IO CTime
 
 foreign import ccall "archive_entry.h archive_entry_birthtime_nsec"
-  archive_entry_birthtime_nsec :: Ptr ArchiveEntry -> IO CLong
+  archive_entry_birthtime_nsec :: Ptr Entry -> IO CLong
 
 foreign import ccall "archive_entry.h archive_entry_set_birthtime"
-  archive_entry_set_birthtime :: Ptr ArchiveEntry -> CTime -> CLong -> IO ()
+  archive_entry_set_birthtime :: Ptr Entry -> CTime -> CLong -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_ctime"
-  archive_entry_ctime :: Ptr ArchiveEntry -> IO CTime
+  archive_entry_ctime :: Ptr Entry -> IO CTime
 
 foreign import ccall "archive_entry.h archive_entry_ctime_nsec"
-  archive_entry_ctime_nsec :: Ptr ArchiveEntry -> IO CLong
+  archive_entry_ctime_nsec :: Ptr Entry -> IO CLong
 
 foreign import ccall "archive_entry.h archive_entry_set_ctime"
-  archive_entry_set_ctime :: Ptr ArchiveEntry -> CTime -> CLong -> IO ()
+  archive_entry_set_ctime :: Ptr Entry -> CTime -> CLong -> IO ()
 
 
 foreign import ccall "archive_entry.h archive_entry_mtime"
-  archive_entry_mtime :: Ptr ArchiveEntry -> IO CTime
+  archive_entry_mtime :: Ptr Entry -> IO CTime
 
 foreign import ccall "archive_entry.h archive_entry_mtime_nsec"
-  archive_entry_mtime_nsec :: Ptr ArchiveEntry -> IO CLong
+  archive_entry_mtime_nsec :: Ptr Entry -> IO CLong
 
 foreign import ccall "archive_entry.h archive_entry_set_mtime"
-  archive_entry_set_mtime :: Ptr ArchiveEntry -> CTime -> CLong -> IO ()
+  archive_entry_set_mtime :: Ptr Entry -> CTime -> CLong -> IO ()
+
+
+data TimeSpec = TimeSpec { sec :: !EpochTime
+                         , nsec :: !Int64
+                         }
+
+
+data Entry = Entry { hardlink :: !FilePath
+                   , pathname :: !FilePath
+                   , sourcepath :: !FilePath
+                   , symlink :: !FilePath
+                   , filetype :: !FileMode
+                   , mode :: !FileMode
+                   , gid :: !GroupID
+                   , uid :: !UserID
+                   , size :: !Int64
+                   , dev :: !DeviceID
+                   , ino64 :: !Int64
+                   , nlink :: !LinkCount
+                   , rdev :: !DeviceID
+                   , atime :: !TimeSpec
+                   , mtime :: !TimeSpec
+                   , ctime :: !TimeSpec
+                   , birthtime :: !TimeSpec
+                   }
+
+peekEntry :: Ptr Entry -> IO Entry
+peekEntry p = do
+  hardlink <- archive_entry_hardlink_w p >>= peekCWString
+  pathname <- archive_entry_pathname_w p >>= peekCWString
+  sourcepath <- archive_entry_sourcepath_w p >>= peekCWString
+  symlink <- archive_entry_symlink_w p >>= peekCWString
+  mode <- archive_entry_mode p
+  filetype <- archive_entry_filetype p
+  gid <- archive_entry_gid p
+  uid <- archive_entry_uid p
+  size <- archive_entry_size p
+  dev <- archive_entry_dev p
+  ino64 <- archive_entry_ino64 p
+  nlink <- archive_entry_nlink p
+  rdev <- archive_entry_rdev p
+  atime <- do
+    sec <- archive_entry_atime p
+    nsec <- fromIntegral <$> archive_entry_atime_nsec p
+    pure TimeSpec {..}
+  mtime <- do
+    sec <- archive_entry_mtime p
+    nsec <- fromIntegral <$> archive_entry_mtime_nsec p
+    pure TimeSpec {..}
+  ctime <- do
+    sec <- archive_entry_ctime p
+    nsec <- fromIntegral <$> archive_entry_ctime_nsec p
+    pure TimeSpec {..}
+  birthtime <- do
+    sec <- archive_entry_birthtime p
+    nsec <- fromIntegral <$> archive_entry_birthtime_nsec p
+    pure TimeSpec {..}
+  pure Entry {..}
