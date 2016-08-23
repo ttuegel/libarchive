@@ -1,6 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Codec.Archive where
+module Codec.Archive
+       ( Event(..), readArchive, writeArchive
+       ) where
 
 import Data.ByteString ( ByteString )
 import System.IO.Streams
@@ -10,9 +12,17 @@ import Codec.Archive.Internal.Read
 import Codec.Archive.Internal.Write
 
 
-data Event = E Entry | B ByteString
+-- | 'Event' is an event encountered while reading an archive, or an event
+-- produced while writing an archive. Files in an archive are represented by
+-- a file header followed by a sequence of data blocks. Reading an archive
+-- produces a stream of files so represented. Writing an archive consumes a
+-- stream of the same.
+data Event = E Entry  -- ^ a file header
+           | B ByteString  -- ^ a block of data
 
 
+-- | Stream an archive from an open file descriptor. The file remains open
+-- after this function returns.
 readArchive :: Fd -> (InputStream Event -> IO a) -> IO a
 readArchive fd go =
   withArchiveRead $ \ar -> do
@@ -34,6 +44,8 @@ readArchive fd go =
     blocksize = 4096
 
 
+-- | Stream an archive to an open file descriptor. The file remains open after
+-- this function returns.
 writeArchive :: Fd -> Format -> [Filter] -> (OutputStream Event -> IO a) -> IO a
 writeArchive fd format filters go =
   withArchiveWrite format filters $ \ar -> do
